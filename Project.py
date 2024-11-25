@@ -2,8 +2,102 @@ import tkinter as tk
 import tkinter.messagebox as messagebox
 import re
 
-import pandas as pd  # For handling Excel/CSV files
+import pandas as pd  
 from tkinter.filedialog import askopenfilename
+
+#Global variables to store user information and attempts
+username = ""
+password = ""
+login_attempts = 3
+student_attempts = 3
+
+def create_account():
+    clear_gui()
+
+    #Username field
+    tk.Label(window, text="Enter a username:").pack()
+    username_entry = tk.Entry(window)
+    username_entry.pack()
+
+    #Password field
+    tk.Label(window, text="Enter a password:").pack()
+    password_entry = tk.Entry(window, show="*")
+    password_entry.pack()
+
+    #Password instructions
+    instruction_bullet_points = """
+    Password must:
+    - Be at least 10 characters long
+    - Contain at least 1 uppercase letter
+    - Contain 2 or 3 numbers
+    - Contain 1 special character
+    """
+    tk.Label(window, text=instruction_bullet_points, justify="left").pack()
+
+    #Submit button
+    tk.Button(window, text="Submit", command=lambda: submit_account(username_entry, password_entry)).pack()
+
+def submit_account(username_entry, password_entry):
+    global username, password
+    username = username_entry.get()
+    password = password_entry.get()
+
+    #Check username, password validity
+    if not username.strip():
+        messagebox.showerror("Error", "Username cannot be empty")
+        return
+    error = is_valid_password(password)
+    if error:
+        messagebox.showerror("Error", error)
+    else:
+        messagebox.showinfo("Success", "Account created successfully!")
+        login()
+
+def is_valid_password(password):
+    #Check password validity based on given rules
+    if len(password) < 10:
+        return "Password should not be less than 10 characters."
+    if not any(char.isupper() for char in password):
+        return "Password should contain at least one uppercase letter."
+    if len([char for char in password if char.isdigit()]) not in [2, 3]:
+        return "Password should contain two or three numbers."
+    if not any(char in "!@#$%^&*()-_=+[]{};:,.<>?/\\|" for char in password):
+        return "Password should contain at least one special character."
+    return None
+
+def login():
+    clear_gui()
+    #Username field
+    tk.Label(window, text="Enter your username:").pack()
+    login_username_entry = tk.Entry(window)
+    login_username_entry.pack()
+
+    #Password field
+    tk.Label(window, text="Enter your password:").pack()
+    login_password_entry = tk.Entry(window, show="*")
+    login_password_entry.pack()
+
+    #Login button
+    tk.Button(window, text="Login", command=lambda: validate_login(login_username_entry, login_password_entry)).pack()
+
+def validate_login(login_username_entry, login_password_entry):
+    global login_attempts
+
+    login_username = login_username_entry.get()
+    login_password = login_password_entry.get()
+
+    #Check if username and password match the stored values
+    if login_username == username and login_password == password:
+        messagebox.showinfo("Success", "Login successful!")
+        clear_gui()
+        get_student_count()
+    else:
+        login_attempts -= 1  #Decrement remaining attempts
+        if login_attempts > 0:
+            messagebox.showerror("Error", f"Invalid credentials. {login_attempts} attempt(s) remaining.")
+        else:
+            messagebox.showerror("Error", "You have exceeded the maximum login attempts.")
+            window.quit()  #Lock the user out since they have exceeded 3 tries
 
 def upload_grades(student_names):
     def process_file():
@@ -89,20 +183,6 @@ def check_password(password):
         return "Password must contain at least one special character."
     return None  # Password is valid
 
-def login():
-    password = password_entry.get()
-    error_message = check_password(password)
-    if error_message:
-        attempts_left.set(attempts_left.get() - 1)
-        messagebox.showerror("Invalid Password", error_message)
-        if attempts_left.get() == 0:
-            messagebox.showinfo("Login Failed", "Too many incorrect password attempts")
-            window.destroy()
-    else:
-        messagebox.showinfo("Success", "Login Successful!")
-        clear_window()
-        get_student_count()
-
 def get_student_count():
     def validate_student_count():
         try:
@@ -165,13 +245,6 @@ def enter_student_names(num_students):
     submit_button = tk.Button(window, text="Submit Names", command=submit_names)
     submit_button.pack()
 
-'''def enter_student_grades(student_names):
-    clear_gui()
-    
-    file_button = tk.Button(window, text="Upload Grades File", command=upload_grades(student_names))
-    file_button.pack(pady=10)'''
-
-
 
 def calculate_gpa(student_names, student_grades):
     results = []
@@ -201,24 +274,18 @@ def display_results(results):
     result_label = tk.Label(window, text=result_text, justify=tk.LEFT)
     result_label.pack()
 
-# Main window
-window = tk.Tk()
-window.title("Humber College")
+def main():
+    # Main window
+    global window 
+    window = tk.Tk()
+    window.title("Humber College")
 
-welcome_label = tk.Label(window, text="Welcome to Humber College")
-welcome_label.pack(pady=20)
+    welcome_label = tk.Label(window, text="Welcome to Humber College")
+    welcome_label.pack(pady=20)
 
-password_label = tk.Label(window, text="Enter Password:")
-password_label.pack()
+    login_button = tk.Button(window, text="Proceed", command=create_account)
+    login_button.pack(pady=10)
 
-password_entry = tk.Entry(window, show="*")
-password_entry.pack()
+    window.mainloop()
 
-login_button = tk.Button(window, text="Login", command=login)
-login_button.pack(pady=10)
-
-attempts_left = tk.IntVar(value=3)
-attempts_label = tk.Label(window, text="Attempts Left:", textvariable=attempts_left)
-attempts_label.pack()
-
-window.mainloop()
+main()
