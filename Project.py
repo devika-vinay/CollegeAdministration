@@ -2,6 +2,65 @@ import tkinter as tk
 import tkinter.messagebox as messagebox
 import re
 
+import pandas as pd  # For handling Excel/CSV files
+from tkinter.filedialog import askopenfilename
+
+def upload_grades(student_names):
+    def process_file():
+        file_path = askopenfilename(
+            filetypes=[("Excel files", "*.xlsx"), ("CSV files", "*.csv")],
+            title="Select a file with grades"
+        )
+        if not file_path:
+            return
+        
+        try:
+            # Read file based on its extension
+            if file_path.endswith('.xlsx'):
+                data = pd.read_excel(file_path)
+            elif file_path.endswith('.csv'):
+                data = pd.read_csv(file_path)
+            else:
+                messagebox.showerror("Invalid File", "Please upload a valid Excel or CSV file.")
+                return
+            
+            # Ensure file has correct structure
+            expected_columns = ["Student Name"] + list(CREDIT_HOURS.keys())
+            if not all(col in data.columns for col in expected_columns):
+                messagebox.showerror(
+                    "Invalid File",
+                    f"File must contain the following columns: {', '.join(expected_columns)}"
+                )
+                return
+            
+            # Match grades to students
+            student_grades = []
+            for name in student_names:
+                student_row = data[data["Student Name"] == name]
+                if student_row.empty:
+                    messagebox.showerror("Missing Data", f"No grades found for student: {name}")
+                    return
+                grades = [int(student_row[course].values[0]) for course in CREDIT_HOURS.keys()]
+                if not all(0 <= grade <= 100 for grade in grades):
+                    messagebox.showerror("Invalid Grades", "Grades must be between 0 and 100.")
+                    return
+                student_grades.append(grades)
+            
+            # Proceed to GPA calculation
+            calculate_gpa(student_names, student_grades)
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+    
+    # Clear the GUI and display the upload button
+    clear_gui()
+    upload_button = tk.Button(window, text="Upload Grades File", command=process_file)
+    upload_button.pack()
+
+def clear_gui():
+    for widget in window.winfo_children():
+        widget.destroy()
+
 # Constants for credit hours
 CREDIT_HOURS = {
     "Math": 4,
@@ -92,7 +151,7 @@ def enter_student_names(num_students):
             student_names.append(name)
         messagebox.showinfo("Success", "Student names recorded.")
         clear_window()
-        enter_student_grades(student_names)
+        upload_grades(student_names)
 
     name_entries = []
 
@@ -106,43 +165,13 @@ def enter_student_names(num_students):
     submit_button = tk.Button(window, text="Submit Names", command=submit_names)
     submit_button.pack()
 
-def enter_student_grades(student_names):
-    student_grades = []
+'''def enter_student_grades(student_names):
+    clear_gui()
+    
+    file_button = tk.Button(window, text="Upload Grades File", command=upload_grades(student_names))
+    file_button.pack(pady=10)'''
 
-    def submit_grades():
-        for i, name in enumerate(student_names):
-            grades = []
-            for course in CREDIT_HOURS.keys():
-                try:
-                    grade = int(grade_entries[i][course].get())
-                    if 0 <= grade <= 100:
-                        grades.append(grade)
-                    else:
-                        messagebox.showerror("Invalid Grade", f"Grade for {course} must be between 0 and 100.")
-                        return
-                except ValueError:
-                    messagebox.showerror("Invalid Input", f"Grade for {course} must be a valid integer.")
-                    return
-            student_grades.append(grades)
-        clear_window()
-        calculate_gpa(student_names, student_grades)
 
-    grade_entries = []
-
-    for i, name in enumerate(student_names):
-        label = tk.Label(window, text=f"Enter grades for {name}:")
-        label.pack()
-        entries = {}
-        for course in CREDIT_HOURS.keys():
-            course_label = tk.Label(window, text=f"{course}:")
-            course_label.pack()
-            entry = tk.Entry(window)
-            entry.pack()
-            entries[course] = entry
-        grade_entries.append(entries)
-
-    submit_button = tk.Button(window, text="Submit Grades", command=submit_grades)
-    submit_button.pack()
 
 def calculate_gpa(student_names, student_grades):
     results = []
