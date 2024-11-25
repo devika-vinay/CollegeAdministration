@@ -1,6 +1,7 @@
 import tkinter as tk
 import tkinter.messagebox as messagebox
 from tkinter.filedialog import askopenfilename
+from tkinter import filedialog
 import pandas as pd
 
 # Global variables to store user information and attempts
@@ -284,6 +285,12 @@ def upload_grades(student_names):
 
 def calculate_gpa(student_data):
     results = []
+    school_distribution = {
+        "School of Engineering": 0,
+        "School of Business": 0,
+        "Law School": 0,
+        "Not accepted": 0
+    }
 
     for row in student_data:
         name = row[0]
@@ -299,19 +306,87 @@ def calculate_gpa(student_data):
         else:
             school = "Not accepted"
         results.append((name, gpa, school))
+        school_distribution[school] += 1
 
     clear_gui()
-    display_results(results)
+    display_reports(results, school_distribution)
 
 
-def display_results(results):
-    result_text = ""
-    for name, gpa, school in results:
-        result_text += f"Student: {name}\nGPA: {gpa:.2f}\nSchool: {school}\n\n"
+def display_reports(results, school_distribution):
 
-    result_label = tk.Label(window, text=result_text, justify=tk.LEFT, bg="#FDF4E7")
-    result_label.pack()
+    def generate_report_content(report_number):
+        # Generate the selected report content
+        if report_number == 1:
+            report_content = "Student Name\t|\tSchool Name\n"
+            report_content += "\n".join(f"{name}\t \t{school}" for name, _, school in results)
+        elif report_number == 2:
+            accepted_count = sum(v for k, v in school_distribution.items() if k != "Not accepted")
+            report_content = f"Total Number of Accepted Students: {accepted_count}\n\n"
+            report_content += "Distribution per School:\n"
+            report_content += "\n".join(f"{school}: {count}" for school, count in school_distribution.items() if school != "Not accepted")
+        elif report_number == 3:
+            not_accepted_count = school_distribution["Not accepted"]
+            report_content = f"Number of Students Rejected: {not_accepted_count}\n"
+        elif report_number == 4:
+            borderline_students = []
+            # Define GPA thresholds for borderline cases
+            borderline_ranges = {
+                "School of Engineering": (89, 90),
+                "School of Business": (79, 80),
+                "Law School": (69, 70)
+            }
+            # Loop through results to find borderline students who are not accepted
+            for name, gpa, assigned_school in results:
+                if assigned_school == "Not accepted":
+                    for school, (low, high) in borderline_ranges.items():
+                        if low <= gpa <= high:
+                            closest_school = school
+                            borderline_students.append((name, gpa, high, closest_school))
 
+            if borderline_students:
+                report_content = "Student Name    | GPA   | Required GPA    | Closest Cutoff School\n"
+                for student in borderline_students:
+                    name, gpa, high, closest_school = student
+                    report_content += f"{name:<15} | {gpa:<4.2f} | {high:<14.2f}  | {closest_school}\n"
+            else:
+                report_content = "No students are borderline for any school."
+        show_report(report_content, results, school_distribution)
+    clear_gui()
+
+    # Buttons for each report
+    tk.Label(window, text="Select a Report to View", font=("Corbel", 24, "bold"), bg="#FDF4E7").pack(pady=50)
+    
+    tk.Button(window, text="Student Names and Schools", font=("Corbel", 12, "bold"), command=lambda: generate_report_content(1), bg="black", fg="#FDF4E7", width=25, height=1).pack(pady=10)
+    tk.Button(window, text="Accepted Student Distribution", font=("Corbel", 12, "bold"), command=lambda: generate_report_content(2), bg="black", fg="#FDF4E7", width=25, height=1).pack(pady=10)
+    tk.Button(window, text="Rejected Students", font=("Corbel", 12, "bold"), command=lambda: generate_report_content(3), bg="black", fg="#FDF4E7", width=25, height=1).pack(pady=10)
+    tk.Button(window, text="Borderline Rejected Students", font=("Corbel", 12, "bold"), command=lambda: generate_report_content(4), bg="black", fg="#FDF4E7", width=25, height=1).pack(pady=10)
+    tk.Button(window, text="Redo Report Generation", font=("Corbel", 12, "bold"), command=get_student_count, bg="black", fg="#FDF4E7", width=25, height=1).pack(pady=10)
+
+def show_report(report_content, results, school_distribution):
+
+    clear_gui()
+    tk.Label(window, text="Report Content", font=("Corbel", 24, "bold"),bg="#FDF4E7").pack(pady=50)
+
+    # Text widget to display the report content
+    text_widget = tk.Text(window, font=("Courier New", 10), bg="#FFFFFF", wrap="none", width=70, height=15)
+    text_widget.insert("1.0", report_content)
+    text_widget.config(state="disabled")
+    text_widget.pack(pady=10)
+
+    # Download Report button
+    def download_report():
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt")],
+            title="Save Report As"
+        )
+        if file_path:
+            with open(file_path, "w") as file:
+                file.write(report_content)
+            messagebox.showinfo("Success", f"Report saved to {file_path}")
+
+    tk.Button(window, text="Download Report", font=("Corbel", 12, "bold"), command=download_report, bg="black", fg="#FDF4E7", width=25, height=1).pack(pady=20)
+    tk.Button(window, text="Back", font=("Corbel", 12, "bold"), command=lambda: display_reports(results, school_distribution), bg="black", fg="#FDF4E7", width=25, height=1).pack(pady=20)
 
 def main():
     global window
