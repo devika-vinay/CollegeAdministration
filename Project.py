@@ -184,15 +184,37 @@ def enter_student_names(num_students):
         upload_grades(student_names)
 
     clear_gui()
-    tk.Label(window, text="Student Names", font=("Corbel", 24, "bold"), bg="#FDF4E7").pack(pady=50)
+    tk.Label(window, text="Student Names", font=("Corbel", 24, "bold"), bg="#FDF4E7").pack(pady=10)
 
+    # Create a frame for the canvas and scrollbar
+    frame = tk.Frame(window, bg="#FDF4E7")
+    frame.pack(fill="both", expand=True, pady=10)
+
+    # Create a canvas inside the frame
+    canvas = tk.Canvas(frame, bg="#FDF4E7")
+    canvas.pack(side="left", fill="both", expand=True)
+
+    # Add a scrollbar linked to the canvas
+    scrollbar = tk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+
+    # Link the scrollbar to the canvas
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+    # Create another frame inside the canvas for content
+    content_frame = tk.Frame(canvas, bg="#FDF4E7")
+    canvas.create_window((0, 0), window=content_frame, anchor="nw")
+
+    # Add student name entry fields inside the content frame
     name_entries = []
     for i in range(num_students):
-        tk.Label(window, text=f"Enter name of Student {i + 1}:", font=("Corbel", 12), bg="#FDF4E7").pack(pady=5)
-        name_entry = tk.Entry(window, width=40) 
+        tk.Label(content_frame, text=f"Enter name of Student {i + 1}:", font=("Corbel", 12), bg="#FDF4E7").pack(pady=5, anchor="w")
+        name_entry = tk.Entry(content_frame, width=40)
         name_entry.pack(pady=5)
         name_entries.append(name_entry)
 
+    # Add submit button outside the scrollable area
     submit_button = tk.Button(window, text="Submit", bg="#000000", fg="#FDF4E7", font=("Corbel", 12, "bold"), command=submit_names, width=25, height=1)
     submit_button.pack(pady=10)
 
