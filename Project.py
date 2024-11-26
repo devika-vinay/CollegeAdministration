@@ -190,11 +190,9 @@ def enter_student_names(num_students):
     frame = tk.Frame(window, bg="#FDF4E7")
     frame.pack(fill="both", expand=True, pady=10)
 
-    # Create a canvas inside the frame
     canvas = tk.Canvas(frame, bg="#FDF4E7")
     canvas.pack(side="left", fill="both", expand=True)
 
-    # Add a scrollbar linked to the canvas
     scrollbar = tk.Scrollbar(frame, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
 
@@ -202,16 +200,15 @@ def enter_student_names(num_students):
     canvas.configure(yscrollcommand=scrollbar.set)
     canvas.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
-    # Create another frame inside the canvas for content
     content_frame = tk.Frame(canvas, bg="#FDF4E7")
-    canvas.create_window((0, 0), window=content_frame, anchor="nw")
+    canvas.create_window((0, 0), window=content_frame, anchor="center")
 
     # Add student name entry fields inside the content frame
     name_entries = []
     for i in range(num_students):
-        tk.Label(content_frame, text=f"Enter name of Student {i + 1}:", font=("Corbel", 12), bg="#FDF4E7").pack(pady=5, anchor="w")
+        tk.Label(content_frame, text=f"Enter name of Student {i + 1}:", font=("Corbel", 12), bg="#FDF4E7").pack(pady=5, anchor="center", padx=500)
         name_entry = tk.Entry(content_frame, width=40)
-        name_entry.pack(pady=5)
+        name_entry.pack(pady=5, padx=500)
         name_entries.append(name_entry)
 
     # Add submit button outside the scrollable area
@@ -359,11 +356,10 @@ def display_reports(results, school_distribution):
             }
             # Loop through results to find borderline students who are not accepted
             for name, gpa, assigned_school in results:
-                if assigned_school == "Not accepted":
-                    for school, (low, high) in borderline_ranges.items():
-                        if low <= gpa <= high:
-                            closest_school = school
-                            borderline_students.append((name, gpa, high, closest_school))
+                for school, (low, high) in borderline_ranges.items():
+                    if low <= gpa <= high:
+                        closest_school = school
+                        borderline_students.append((name, gpa, high, closest_school))
 
             if borderline_students:
                 report_content = "Student Name    | GPA   | Required GPA    | Closest Cutoff School\n"
