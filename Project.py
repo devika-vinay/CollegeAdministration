@@ -83,14 +83,25 @@ def create_account():
 
 def is_valid_password(password):
     # Check password validity based on given rules
+    numcount=0
+    uppercasecount=0
+    specialcharcount=0
+    for char in password:
+        if char.isupper():
+            uppercasecount+=1
+        if char in "!@#$%^&*()-_=+[]{};:,.<>?/\\|":
+            specialcharcount+=1
+        if char.isdigit():
+            numcount+=1
+
     if len(password) < 10:
         return "Password should not be less than 10 characters."
-    if not any(char.isupper() for char in password):
+    if uppercasecount < 1:
         return "Password should contain at least one uppercase letter."
-    if len([char for char in password if char.isdigit()]) not in [2, 3]:
-        return "Password should contain two or three numbers."
-    if not any(char in "!@#$%^&*()-_=+[]{};:,.<>?/\\|" for char in password):
+    if specialcharcount < 1:
         return "Password should contain at least one special character."
+    if numcount not in [2, 3]:  
+        return "Password should contain only two or three numbers."        
     return None
 
 
@@ -220,8 +231,7 @@ def upload_grades(student_names):
     def process_file():
         file_path = askopenfilename(
             filetypes=[("Excel files", "*.xlsx"), ("CSV files", "*.csv")],
-            title="Select a file with grades"
-        )
+            title="Select a file with grades")
 
         if not file_path:
             return
