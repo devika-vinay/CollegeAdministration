@@ -2,7 +2,6 @@ import tkinter as tk
 import tkinter.messagebox as messagebox
 from tkinter.filedialog import askopenfilename
 from tkinter import filedialog
-from tkinter import Listbox
 import pandas as pd
 
 # Global variables to store user information and attempts
