@@ -383,11 +383,27 @@ def displayReports(results, school_distribution):
                     if low <= gpa <= high:
                         closest_school = school
                         borderline_students.append((name, gpa, high, closest_school))
+            
+            # Sort students into order based on the school
+            engineering_students = []
+            business_students = []
+            law_students = []
+
+            for i in range(len(borderline_students)):
+                if borderline_students[i][3] == "School of Engineering":
+                    engineering_students.append(borderline_students[i])
+                elif borderline_students[i][3] == "School of Business":
+                    business_students.append(borderline_students[i])
+                elif borderline_students[i][3] == "Law School":
+                    law_students.append(borderline_students[i])
+            
+            ordered_list_students = engineering_students + business_students + law_students
+
 
             # Compile the report format from the content in the borderline_students list
-            if borderline_students:
+            if ordered_list_students:
                 report_content = "Student Name    | GPA   | Required GPA    | Closest Cutoff School\n"
-                for student in borderline_students:
+                for student in ordered_list_students:
                     name, gpa, high, closest_school = student
                     report_content += f"{name:<15} | {gpa:<4.2f} | {high:<14.2f}  | {closest_school}\n"
             else:
